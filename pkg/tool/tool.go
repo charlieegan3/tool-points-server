@@ -114,6 +114,26 @@ func (d *PointsServer) HTTPAttach(router *mux.Router) error {
 		),
 	).Methods("POST")
 
+	router.HandleFunc(
+		"/points/period",
+		handlers.BuildPeriodIndexHandler(
+			d.username,
+			d.password,
+		),
+	).Methods("GET")
+
+	router.HandleFunc(
+		"/points/gpx",
+		handlers.BuildPeriodGPXHandler(
+			d.googleServiceAccountKey,
+			d.googleProject,
+			d.bqDataset,
+			d.bqTable,
+			d.username,
+			d.password,
+		),
+	).Methods("GET")
+
 	return nil
 }
 

@@ -7,12 +7,12 @@ go 1.19
 require (
 	cloud.google.com/go/bigquery v1.50.0
 	github.com/Jeffail/gabs/v2 v2.7.0
-	github.com/charlieegan3/photos v0.0.0-20230713062003-3d9d1c17d146
 	github.com/charlieegan3/toolbelt v0.0.0-20230902111404-a1294f8c1e26
 	github.com/gorilla/mux v1.8.0
 	github.com/maxatome/go-testdeep v1.13.0
 	github.com/spf13/viper v1.13.0
 	github.com/stretchr/testify v1.8.1
+	github.com/tkrajina/gpxgo v1.2.1
 	golang.org/x/net v0.10.0
 	google.golang.org/api v0.126.0
 )
@@ -26,6 +26,7 @@ require (
 	github.com/apache/arrow/go/v11 v11.0.0 // indirect
 	github.com/apache/thrift v0.16.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/docker/docker v20.10.17+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/golang-migrate/migrate/v4 v4.15.2 // indirect

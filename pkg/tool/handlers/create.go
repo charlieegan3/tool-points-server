@@ -57,8 +57,6 @@ func BuildPointCreateHandler(
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/html; charset=UTF-a")
-
 		if val, ok := r.Header["Content-Type"]; !ok || val[0] != "application/json" {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Content-Type must be 'multipart/form-data'"))
