@@ -19,6 +19,10 @@ type PointsServer struct {
 
 	bqTable, bqDataset, googleServiceAccountKey, googleProject string
 
+	username, password string
+
+	callers map[string]int64
+
 	bqClient *bigquery.Client
 }
 
@@ -63,6 +67,33 @@ func (d *PointsServer) SetConfig(config map[string]any) error {
 		return fmt.Errorf("config path %s is not a string", path)
 	}
 
+	path = "auth.username"
+	d.username, ok = d.config.Path(path).Data().(string)
+	if !ok {
+		return fmt.Errorf("config path %s is not a string", path)
+	}
+
+	path = "auth.password"
+	d.password, ok = d.config.Path(path).Data().(string)
+	if !ok {
+		return fmt.Errorf("config path %s is not a string", path)
+	}
+
+	path = "callers"
+	callers, ok := d.config.Path(path).Data().(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("config path %s is not a map", path)
+	}
+
+	d.callers = make(map[string]int64)
+	for caller, id := range callers {
+		intID, ok := id.(int)
+		if !ok {
+			return fmt.Errorf("caller %s id is not an int", caller)
+		}
+		d.callers[caller] = int64(intID)
+	}
+
 	return nil
 }
 func (d *PointsServer) HTTPPath() string {
@@ -73,10 +104,13 @@ func (d *PointsServer) HTTPAttach(router *mux.Router) error {
 	router.HandleFunc(
 		"/points",
 		handlers.BuildPointCreateHandler(
-			d.googleProject,
 			d.googleServiceAccountKey,
+			d.googleProject,
 			d.bqDataset,
 			d.bqTable,
+			d.username,
+			d.password,
+			d.callers,
 		),
 	).Methods("POST")
 

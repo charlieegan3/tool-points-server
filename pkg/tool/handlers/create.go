@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -14,14 +15,47 @@ import (
 	bq "github.com/charlieegan3/tool-points-server/pkg/bigquery"
 )
 
-func BuildPointCreateHandler(googleServiceAccountJSON, googleProject, bqDataset, bqTable string) func(http.ResponseWriter, *http.Request) {
+func BuildPointCreateHandler(
+	googleServiceAccountJSON,
+	googleProject,
+	bqDataset,
+	bqTable,
+	username,
+	password string,
+	callers map[string]int64,
+
+) func(http.ResponseWriter, *http.Request) {
+
+	usernameHash := sha256.Sum256([]byte(username))
+	passwordHash := sha256.Sum256([]byte(password))
+
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		u, p, ok := r.BasicAuth()
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("missing credentials"))
+			return
+		}
+
+		uHash := sha256.Sum256([]byte(u))
+		pHash := sha256.Sum256([]byte(p))
+		if usernameHash != uHash || passwordHash != pHash {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("invalid credentials"))
+			return
+		}
 
 		bqClient, err := bigquery.NewClient(
 			r.Context(),
 			googleProject,
 			option.WithCredentialsJSON([]byte(googleServiceAccountJSON)),
 		)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 
 		w.Header().Set("Content-Type", "text/html; charset=UTF-a")
 
@@ -57,6 +91,22 @@ func BuildPointCreateHandler(googleServiceAccountJSON, googleProject, bqDataset,
 			return
 		}
 
+		topicParts := strings.Split(upload.Topic, "/")
+		if len(topicParts) != 3 {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("unexpected topic format"))
+			return
+		}
+
+		var callerID int64
+		val, ok := callers[topicParts[2]]
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("unknown caller"))
+			return
+		}
+		callerID = val
+
 		points := []apis.Point{
 			{
 				Latitude:         upload.Latitude,
@@ -66,15 +116,13 @@ func BuildPointCreateHandler(googleServiceAccountJSON, googleProject, bqDataset,
 				Accuracy:         upload.Accuracy,
 				VerticalAccuracy: upload.VerticalAccuracy,
 				WasOffline:       upload.Connection == "o",
-				CreatedAt:        time.Unix(upload.Time, 0),
+				// this is the ID of the owntracks importer
+				ImporterID: 1,
+				// this the id of the reason this endpoint
+				ReasonID:  1,
+				CallerID:  callerID,
+				CreatedAt: time.Unix(upload.Time, 0),
 			},
-		}
-
-		topicParts := strings.Split(upload.Topic, "/")
-		if len(topicParts) != 3 {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("unexpected topic format"))
-			return
 		}
 
 		err = bq.InsertPoints(r.Context(), bqClient, points, bqDataset, bqTable)
