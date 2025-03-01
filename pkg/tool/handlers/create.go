@@ -86,7 +86,7 @@ func BuildPointCreateHandler(
 		topicParts := strings.Split(upload.Topic, "/")
 		if len(topicParts) != 3 {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("unexpected topic format"))
+			w.Write([]byte("unexpected topic format " + upload.Topic))
 			return
 		}
 
