@@ -57,9 +57,16 @@ func BuildPointCreateHandler(
 			return
 		}
 
+		bytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
 		if val, ok := r.Header["Content-Type"]; !ok || val[0] != "application/json" {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Content-Type must be 'multipart/form-data'"))
+			w.Write([]byte("Content-Type must be 'multipart/form-data'" + string(bytes)))
 			return
 		}
 
@@ -74,13 +81,6 @@ func BuildPointCreateHandler(
 			Topic            string  `json:"topic"`
 			Time             int64   `json:"tst"`
 		}{}
-
-		bytes, err := io.ReadAll(r.Body)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
 
 		err = json.Unmarshal(bytes, &upload)
 		if err != nil {
