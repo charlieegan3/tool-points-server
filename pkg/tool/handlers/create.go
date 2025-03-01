@@ -64,12 +64,6 @@ func BuildPointCreateHandler(
 			return
 		}
 
-		if val, ok := r.Header["Content-Type"]; !ok || val[0] != "application/json" {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Content-Type must be 'multipart/form-data'" + string(bytes)))
-			return
-		}
-
 		upload := struct {
 			Latitude         float64 `json:"lat"`
 			Longitude        float64 `json:"lon"`
