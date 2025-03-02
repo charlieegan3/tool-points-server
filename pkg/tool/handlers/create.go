@@ -25,12 +25,10 @@ func BuildPointCreateHandler(
 	callers map[string]int64,
 
 ) func(http.ResponseWriter, *http.Request) {
-
 	usernameHash := sha256.Sum256([]byte(username))
 	passwordHash := sha256.Sum256([]byte(password))
 
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		u, p, ok := r.BasicAuth()
 		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -123,5 +121,9 @@ func BuildPointCreateHandler(
 			w.Write([]byte(err.Error()))
 			return
 		}
+
+		w.Header().Set("Content-Type", "application/json")
+		// some clients expect an empty array
+		w.Write([]byte(`[]`))
 	}
 }
